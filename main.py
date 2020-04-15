@@ -1,5 +1,6 @@
 from data import db_session, users, jobs
 from flask import Flask
+import datetime
 
 
 app = Flask(__name__)
@@ -10,17 +11,15 @@ def main():
     db_session.global_init("db/mars.sqlite")
     session = db_session.create_session()
 
-    user = users.User()
-    user.surname = "Scott"
-    user.name = "Ridley"
-    user.age = 21
-    user.position = "captain"
-    user.speciality = "research engineer"
-    user.address = "module_1"
-    user.email = "scott_chief@mars.org"
-    user.hashed_password = "cap12345"
+    job = jobs.Jobs()
+    job.team_leader = 1
+    job.job = 'deployment of residential modules 1 and 2'
+    job.work_size = 15
+    job.collaborators = '2, 3'
+    job.start_date = datetime.datetime.now()
+    job.is_finished = False
 
-    session.add(user)
+    session.add(job)
     session.commit()
 
     app.run()
