@@ -1,31 +1,32 @@
 from data import db_session, users, jobs
-from flask import Flask
-import datetime
+from flask import Flask, render_template
 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 
 
+@app.route("/")
 def main():
     db_session.global_init("db/mars.sqlite")
     session = db_session.create_session()
+    jobs_data = []
 
-    job = jobs.Jobs()
-    job.team_leader = 1
-    job.job = 'deployment of residential modules 1 and 2'
-    job.work_size = 15
-    job.collaborators = '2, 3'
-    job.start_date = datetime.datetime.now()
-    job.is_finished = False
+    for job in session.query(jobs.Jobs).all():
+        team_leader = session.query(users.User).filter(users.User.id == job.id).first()
+        is_finised = "Is finished" if job.is_finished else "Is not finished"
+        jobs_data.append([
+            job.job,
+            team_leader.surname + " " + team_leader.name,
+            str(job.work_size) + " hours",
+            job.collaborators,
+            is_finised
+        ])
 
-    session.add(job)
-    session.commit()
-
-    app.run()
+    return render_template('job_journals.html', jobs_data=jobs_data)
 
 
 if __name__ == '__main__':
-    main()
+    app.run()
 
 

@@ -1,0 +1,22 @@
+{% extends "ex1.html" %}
+
+{% block content %}
+<h3>Works log</h3>
+{% for string in jobs_data %}
+<h5>Action #{{ loop.index }}</h5>
+<table border="1" cellpadding="5" cellspacing="5">
+    <tr>
+        <th style="background-color: #D0D0D0">Title of activity</th>
+        <th style="background-color: #D0D0D0">Team leader</th>
+        <th style="background-color: #D0D0D0"> Duration</th>
+        <th style="background-color: #D0D0D0">List of collaborators</th>
+        <th style="background-color: #D0D0D0">Is finished</th>
+    </tr>
+    <tr>
+        {% for elem in string %}
+        <td style="background-color: #CEEAF8">{{ elem }}</td>
+        {% endfor %}
+    </tr>
+</table>
+{% endfor %}
+{% endblock %}
