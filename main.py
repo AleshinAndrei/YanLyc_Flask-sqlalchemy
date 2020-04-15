@@ -13,7 +13,7 @@ def main():
     jobs_data = []
 
     for job in session.query(jobs.Jobs).all():
-        team_leader = session.query(users.User).filter(users.User.id == job.id).first()
+        team_leader = session.query(users.User).filter(users.User.id == job.team_leader).first()
         is_finised = "Is finished" if job.is_finished else "Is not finished"
         jobs_data.append([
             job.job,
