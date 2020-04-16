@@ -2,7 +2,7 @@ from data import db_session, users, jobs
 from flask import Flask, render_template, redirect
 from flask_login import LoginManager, login_user
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, BooleanField, SubmitField
+from wtforms import PasswordField, BooleanField, SubmitField, StringField, IntegerField
 from wtforms.validators import DataRequired
 from wtforms.fields.html5 import EmailField
 
@@ -19,6 +19,19 @@ class LoginForm(FlaskForm):
     password = PasswordField('Пароль', validators=[DataRequired()])
     remember_me = BooleanField('Запомнить меня')
     submit = SubmitField('Войти')
+
+
+class RegisterForm(FlaskForm):
+    email = EmailField('Login / email', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    rep_password = PasswordField('Repeat password', validators=[DataRequired()])
+    surname = StringField('Surname', validators=[DataRequired()])
+    name = StringField('Name', validators=[DataRequired()])
+    age = IntegerField('Age', validators=[DataRequired()])
+    position = StringField('Position', validators=[DataRequired()])
+    speciality = StringField('Speciality', validators=[DataRequired()])
+    address = StringField('Address', validators=[DataRequired()])
+    submit = SubmitField('Submit')
 
 
 @login_manager.user_loader
@@ -53,16 +66,37 @@ def login():
     if form.validate_on_submit():
         session = db_session.create_session()
         user = session.query(users.User).filter(users.User.email == form.email.data).first()
-        print("checking")
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
-            print("ok")
             return redirect("/")
-        print("not ok")
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
-    return render_template('login.html', title='Не Авторизация', form=form)
+    return render_template('login.html', title='Авторизация', form=form)
+
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        if form.password.data != form.rep_password.data:
+            return render_template('register.html', title='Регистрация',
+                                   form=form,
+                                   message="Пароли не совпадают")
+        session = db_session.create_session()
+        if session.query(users.User).filter(users.User.email == form.email.data).first():
+            return render_template('register.html', title='Регистрация',
+                                   form=form,
+                                   message="Такой пользователь уже есть")
+        user = users.User(
+            name=form.name.data,
+            email=form.email.data,
+        )
+        user.set_password(form.password.data)
+        session.add(user)
+        session.commit()
+        return redirect('/login')
+    return render_template('register.html', title='Регистрация', form=form)
 
 
 if __name__ == '__main__':
