@@ -89,8 +89,15 @@ def register():
                                    form=form,
                                    message="Такой пользователь уже есть")
         user = users.User(
+            surname=form.surname.data,
             name=form.name.data,
             email=form.email.data,
+            age=form.age.data,
+            position=form.position.data,
+            speciality=form.speciality.data,
+            address=form.address.data,
+            hashed_password=form.hashed_password.data,
+            modified_date=form.modified_date.data
         )
         user.set_password(form.password.data)
         session.add(user)
