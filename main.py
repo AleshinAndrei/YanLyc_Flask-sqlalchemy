@@ -1,6 +1,6 @@
 from data import db_session, users, jobs
 from flask import Flask, render_template, redirect
-from flask_login import LoginManager, login_user
+from flask_login import LoginManager, login_user, login_required, logout_user
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, BooleanField, SubmitField, StringField, IntegerField
 from wtforms.validators import DataRequired
@@ -31,6 +31,15 @@ class RegisterForm(FlaskForm):
     position = StringField('Position', validators=[DataRequired()])
     speciality = StringField('Speciality', validators=[DataRequired()])
     address = StringField('Address', validators=[DataRequired()])
+    submit = SubmitField('Submit')
+
+
+class NewJobForm(FlaskForm):
+    job = StringField('Job Title', validators=[DataRequired()])
+    team_leader = IntegerField('Team leader id', validators=[DataRequired()])
+    work_size = IntegerField('Work Size', validators=[DataRequired()])
+    collaborators = StringField('Collaborators')
+    is_finished = BooleanField('Is job finished?')
     submit = SubmitField('Submit')
 
 
@@ -72,7 +81,7 @@ def login():
         return render_template('login.html',
                                message="Неправильный логин или пароль",
                                form=form)
-    return render_template('login.html', title='Авторизация', form=form)
+    return render_template('login.html', title='Авторизация', form=form, message='')
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -96,14 +105,47 @@ def register():
             position=form.position.data,
             speciality=form.speciality.data,
             address=form.address.data,
-            hashed_password=form.hashed_password.data,
-            modified_date=form.modified_date.data
+            hashed_password=form.password.data
         )
         user.set_password(form.password.data)
         session.add(user)
         session.commit()
         return redirect('/login')
-    return render_template('register.html', title='Регистрация', form=form)
+    return render_template('register.html', title='Регистрация', form=form, message='')
+
+
+@app.route('/new_job', methods=['GET', 'POST'])
+def new_job():
+    form = NewJobForm()
+    if form.validate_on_submit():
+        session = db_session.create_session()
+        if session.query(users.User).filter(users.User.id == form.team_leader.data).first() is None:
+            return render_template('new_job.html', form=form,
+                                   message="Тимлидера с таким id не существует")
+        for user in session.query(users.User).all():
+            if user.id in map(int, form.collaborators.data.split(', ')):
+                break
+        else:
+            return render_template('new_job.html', form=form,
+                                   message="Одного из членов команды с таким id не существует")
+        job = jobs.Jobs(
+            team_leader=form.team_leader.data,
+            job=form.job.data,
+            work_size=form.work_size.data,
+            collaborators=form.collaborators.data,
+            is_finished=form.is_finished.data
+        )
+        session.add(job)
+        session.commit()
+        return redirect('/')
+    return render_template('new_job.html', form=form, message='')
+
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect("/")
 
 
 if __name__ == '__main__':

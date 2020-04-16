@@ -1,11 +1,11 @@
 {% extends "ex1.html" %}
 
 {% block content %}
-<h1>Register Form</h1>
+<h1>Adding a Job</h1>
 <form action="" method="post" novalidate>
     {{ form.hidden_tag() }}
     {{ form.csrf_token }}
-    {% for field in form if field.name not in ['csrf_token', 'submit', 'remember_me']  %}
+    {% for field in form if field.name not in ['csrf_token', 'submit', 'is_finished']  %}
     <p>
         {{ field.label }}<br>
         {{ field(class="form-control") }}<br>
@@ -16,6 +16,7 @@
         {% endfor %}
     </p>
     {% endfor %}
+    <p>{{ form.is_finished() }} {{ form.is_finished.label }}</p>
     <p>{{ form.submit(type="submit", class="btn btn-primary") }}</p>
     {% if message != '' %}
     <div class="alert alert-danger" role="alert">
