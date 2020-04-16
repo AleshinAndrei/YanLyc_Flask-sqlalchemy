@@ -115,12 +115,10 @@ def new_job():
         if session.query(users.User).filter(users.User.id == form.team_leader.data).first() is None:
             return render_template('new_job.html', form=form,
                                    message="Тимлидера с таким id не существует")
-        for user in session.query(users.User).all():
-            if user.id in map(int, form.collaborators.data.split(', ')):
-                break
-        else:
-            return render_template('new_job.html', form=form,
-                                   message="Одного из членов команды с таким id не существует")
+        for col_id in [int(i) for i in form.collaborators.data.split(', ') if i.isdigit()]:
+            if session.query(users.User).filter(users.User.id == col_id).first() is None:
+                return render_template('new_job.html', form=form,
+                                       message="Одного из членов команды с таким id не существует")
         job = jobs.Jobs(
             team_leader=form.team_leader.data,
             job=form.job.data,
@@ -150,12 +148,11 @@ def edit_job(id):
         if session.query(users.User).filter(users.User.id == form.team_leader.data).first() is None:
             return render_template('new_job.html', form=form,
                                    message="Тимлидера с таким id не существует")
-        for user in session.query(users.User).all():
-            if user.id in map(int, form.collaborators.data.split(', ')):
-                break
-        else:
-            return render_template('new_job.html', form=form,
-                                   message="Одного из членов команды с таким id не существует")
+        for col_id in [int(i) for i in form.collaborators.data.split(', ') if i.isdigit()]:
+            if session.query(users.User).filter(users.User.id == col_id).first() is None:
+                return render_template('new_job.html', form=form,
+                                       message="Одного из членов команды с таким id не существует")
+
         job.team_leader = form.team_leader.data
         job.job = form.job.data
         job.work_size = form.work_size.data
