@@ -1,6 +1,6 @@
 from data import db_session, users, jobs
-from flask import Flask, render_template, redirect
-from flask_login import LoginManager, login_user, login_required, logout_user
+from flask import Flask, render_template, redirect, abort
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, BooleanField, SubmitField, StringField, IntegerField
 from wtforms.validators import DataRequired
@@ -53,20 +53,13 @@ def load_user(user_id):
 def main():
     db_session.global_init("db/mars.sqlite")
     session = db_session.create_session()
-    jobs_data = []
+    all_jobs = session.query(jobs.Jobs).all()
+    team_leaders = [
+        session.query(users.User).filter(users.User.id == job.team_leader).first()
+        for job in all_jobs
+    ]
 
-    for job in session.query(jobs.Jobs).all():
-        team_leader = session.query(users.User).filter(users.User.id == job.team_leader).first()
-        is_finised = "Is finished" if job.is_finished else "Is not finished"
-        jobs_data.append([
-            job.job,
-            team_leader.surname + " " + team_leader.name,
-            str(job.work_size) + " hours",
-            job.collaborators,
-            is_finised
-        ])
-
-    return render_template('job_journals.html', jobs_data=jobs_data)
+    return render_template('job_journals.html', jobs=all_jobs, team_leaders=team_leaders)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -139,6 +132,55 @@ def new_job():
         session.commit()
         return redirect('/')
     return render_template('new_job.html', form=form, message='')
+
+
+@app.route('/edit_job/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_job(id):
+    session = db_session.create_session()
+    job = session.query(jobs.Jobs).filter(jobs.Jobs.id == id).first()
+    form = NewJobForm(
+        team_leader=job.team_leader,
+        job=job.job,
+        work_size=job.work_size,
+        collaborators=job.collaborators,
+        is_finished=job.is_finished
+    )
+    if form.validate_on_submit():
+        if session.query(users.User).filter(users.User.id == form.team_leader.data).first() is None:
+            return render_template('new_job.html', form=form,
+                                   message="Тимлидера с таким id не существует")
+        for user in session.query(users.User).all():
+            if user.id in map(int, form.collaborators.data.split(', ')):
+                break
+        else:
+            return render_template('new_job.html', form=form,
+                                   message="Одного из членов команды с таким id не существует")
+        job.team_leader = form.team_leader.data
+        job.job = form.job.data
+        job.work_size = form.work_size.data
+        job.collaborators = form.collaborators.data
+        job.is_finished = form.is_finished.data
+
+        session.add(job)
+        session.commit()
+        return redirect('/')
+    elif current_user.id not in {job.team_leader, 1}:
+            abort(404)
+    return render_template('new_job.html', form=form, message='')
+
+
+@app.route('/delete_job/<int:id>', methods=['GET', 'POST'])
+@login_required
+def delete_job(id):
+    session = db_session.create_session()
+    job = session.query(jobs.Jobs).filter(jobs.Jobs.id == id).first()
+
+    if current_user.id in {job.team_leader, 1}:
+        session.delete(job)
+        session.commit()
+        return redirect('/')
+    return abort(404)
 
 
 @app.route('/logout')

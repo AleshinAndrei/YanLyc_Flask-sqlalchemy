@@ -1,22 +1,41 @@
-{% extends "ex1.html" %}
+{% extends "index.html" %}
 
 {% block content %}
 <h3>Works log</h3>
-{% for string in jobs_data %}
+{% if current_user.is_authenticated %}
+    <a href="new_job" class="btn btn-secondary">Add</a>
+{% endif %}
+{% for job in jobs %}
 <h5>Action #{{ loop.index }}</h5>
 <table border="1" cellpadding="5" cellspacing="5">
     <tr>
-        <th style="background-color: #D0D0D0">Title of activity</th>
-        <th style="background-color: #D0D0D0">Team leader</th>
-        <th style="background-color: #D0D0D0"> Duration</th>
-        <th style="background-color: #D0D0D0">List of collaborators</th>
-        <th style="background-color: #D0D0D0">Is finished</th>
+        <th style="background-color: #dddddd">Title of activity</th>
+        <th style="background-color: #dddddd">Team leader</th>
+        <th style="background-color: #dddddd">Duration</th>
+        <th style="background-color: #dddddd">List of collaborators</th>
+        <th style="background-color: #dddddd">Is finished</th>
     </tr>
     <tr>
-        {% for elem in string %}
-        <td style="background-color: #CEEAF8">{{ elem }}</td>
-        {% endfor %}
+        <td style="background-color: #eeeeff">{{ job.job }}</td>
+        <td style="background-color: #eeeeff">
+            {{ team_leaders[loop.index0].name }} {{ team_leaders[loop.index0].surname }}
+        </td>
+        <td style="background-color: #eeeeff">{{ job.work_size }}</td>
+        <td style="background-color: #eeeeff">{{ job.collaborators }}</td>
+        {% if job.is_finished %}
+        <td style="background-color: #eeeeff">Is finished</td>
+        {% else %}
+        <td style="background-color: #ffeeff">Is not finished</td>
+        {% endif %}
     </tr>
 </table>
+<br>
+{% if current_user.is_authenticated and current_user.id in [team_leaders[loop.index0].id, 1] %}
+    <div>
+        <a href="/edit_job/{{ job.id }}" class="btn btn-warning">Изменить</a>
+        <a href="/delete_job/{{ job.id }}" class="btn btn-danger">Удалить</a>
+    </div>
+    <br>
+{% endif %}
 {% endfor %}
 {% endblock %}
