@@ -6,6 +6,7 @@ from wtforms import PasswordField, BooleanField, SubmitField, StringField, Integ
 from wtforms.validators import DataRequired
 from wtforms.fields.html5 import EmailField
 import jobs_api
+import users_api
 
 
 db_session.global_init("db/mars.sqlite")
@@ -195,6 +196,5 @@ def logout():
 
 if __name__ == '__main__':
     app.register_blueprint(jobs_api.blueprint)
+    app.register_blueprint(users_api.blueprint)
     app.run()
-
-

@@ -1,6 +1,5 @@
-from flask import Blueprint, jsonify
-from data import db_session, users, jobs
-User = users.User
+from flask import Blueprint, jsonify, request
+from data import db_session, jobs
 Jobs = jobs.Jobs
 
 
@@ -30,3 +29,59 @@ def get_job(job_id):
         }
     )
 
+
+@blueprint.route('/api/jobs', methods=['POST'])
+def create_jobs():
+    if not request.json:
+        return jsonify({'error': 'Empty request'})
+    elif not all(key in request.json for key in
+                 ['team_leader', 'job', 'work_size', 'collaborators', 'is_finished']):
+        return jsonify({'error': 'Bad request'})
+    session = db_session.create_session()
+    jobs = Jobs(
+        team_leader=request.json['team_leader'],
+        job=request.json['job'],
+        work_size=request.json['work_size'],
+        collaborators=request.json['collaborators'],
+        is_finished=request.json['is_finished'],
+    )
+    if all(key in request.json for key in ['start_date', 'end_date']):
+        jobs.start_date = request.json['start_date']
+        jobs.end_date = request.json['end_date']
+
+    session.add(jobs)
+    session.commit()
+    return jsonify({'success': 'OK'})
+
+
+@blueprint.route('/api/jobs/<int:jobs_id>', methods=['DELETE'])
+def delete_jobs(jobs_id):
+    session = db_session.create_session()
+    job = session.query(Jobs).filter(Jobs.id == jobs_id).first()
+    if not job:
+        return jsonify({'error': 'Not found'})
+    session.delete(job)
+    session.commit()
+    return jsonify({'success': 'OK'})
+
+
+@blueprint.route('/api/jobs/<int:jobs_id>', methods=['PUT'])
+def edit_jobs(jobs_id):
+    if not request.json:
+        return jsonify({'error': 'Empty request'})
+    session = db_session.create_session()
+    job = session.query(Jobs).filter(Jobs.id == jobs_id).first()
+    if not job:
+        return jsonify({'error': 'Not found'})
+
+    job.team_leader = request.json['team_leader']
+    job.job = request.json['job']
+    job.work_size = request.json['work_size']
+    job.collaborators = request.json['collaborators']
+    job.is_finished = request.json['is_finished']
+    if all(key in request.json for key in ['start_date', 'end_date']):
+        job.start_date = request.json['start_date']
+        job.end_date = request.json['end_date']
+
+    session.commit()
+    return jsonify({'success': 'OK'})
