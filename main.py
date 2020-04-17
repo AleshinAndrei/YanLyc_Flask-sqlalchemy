@@ -1,10 +1,11 @@
 from data import db_session, users, jobs
-from flask import Flask, render_template, redirect, abort
+from flask import Flask, render_template, redirect, abort, make_response, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import PasswordField, BooleanField, SubmitField, StringField, IntegerField
 from wtforms.validators import DataRequired
 from wtforms.fields.html5 import EmailField
+import jobs_api
 
 
 db_session.global_init("db/mars.sqlite")
@@ -47,6 +48,11 @@ class NewJobForm(FlaskForm):
 def load_user(user_id):
     session = db_session.create_session()
     return session.query(users.User).get(user_id)
+
+
+@app.errorhandler(404)
+def not_found(error):
+    return make_response(jsonify({'error': 'Not found'}), 404)
 
 
 @app.route("/")
@@ -188,6 +194,7 @@ def logout():
 
 
 if __name__ == '__main__':
+    app.register_blueprint(jobs_api.blueprint)
     app.run()
 
 
