@@ -5,6 +5,8 @@ from flask_wtf import FlaskForm
 from wtforms import PasswordField, BooleanField, SubmitField, StringField, IntegerField
 from wtforms.validators import DataRequired
 from wtforms.fields.html5 import EmailField
+from flask_restful import Api
+import users_resources
 import jobs_api
 import users_api
 
@@ -14,6 +16,9 @@ app = Flask(__name__)
 login_manager = LoginManager()
 login_manager.init_app(app)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
+api = Api(app)
+api.add_resource(users_resources.UsersListResource, '/api/v2/users')
+api.add_resource(users_resources.UserResource, '/api/v2/users/<int:user_id>')
 
 
 class LoginForm(FlaskForm):
