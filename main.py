@@ -7,6 +7,7 @@ from wtforms.validators import DataRequired
 from wtforms.fields.html5 import EmailField
 from flask_restful import Api
 import users_resources
+import jobs_resources
 import jobs_api
 import users_api
 
@@ -19,6 +20,8 @@ app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 api = Api(app)
 api.add_resource(users_resources.UsersListResource, '/api/v2/users')
 api.add_resource(users_resources.UserResource, '/api/v2/users/<int:user_id>')
+api.add_resource(jobs_resources.JobsListResource, '/api/v2/jobs')
+api.add_resource(jobs_resources.JobResource, '/api/v2/jobs/<int:job_id>')
 
 
 class LoginForm(FlaskForm):
@@ -202,4 +205,4 @@ def logout():
 if __name__ == '__main__':
     app.register_blueprint(jobs_api.blueprint)
     app.register_blueprint(users_api.blueprint)
-    app.run()
+    app.run(debug=True)

@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
-from data import db_session, jobs
+from data import db_session, jobs, users
 Jobs = jobs.Jobs
+User = users.User
 
 
 blueprint = Blueprint('jobs_api', __name__, template_folder='templates')
@@ -38,6 +39,11 @@ def create_jobs():
                  ['team_leader', 'job', 'work_size', 'collaborators', 'is_finished']):
         return jsonify({'error': 'Bad request'})
     session = db_session.create_session()
+    if session.query(User).filter(User.id == request.json['team_leader']).first() is None:
+        return jsonify({'error': 'Bad request (Incorrect teamlider`s id)'})
+    for col_id in [int(i) for i in request.json['collaborators'] if i.isdigit()]:
+        if session.query(users.User).filter(users.User.id == col_id).first() is None:
+            return jsonify({'error': 'Bad request (Incorrect collaborators` id)'})
     jobs = Jobs(
         team_leader=request.json['team_leader'],
         job=request.json['job'],
@@ -73,7 +79,11 @@ def edit_jobs(jobs_id):
     job = session.query(Jobs).filter(Jobs.id == jobs_id).first()
     if not job:
         return jsonify({'error': 'Not found'})
-
+    if session.query(User).filter(User.id == request.json['team_leader']).first() is None:
+        return jsonify({'error': 'Bad request (Incorrect teamlider`s id)'})
+    for col_id in [int(i) for i in request.json['collaborators'] if i.isdigit()]:
+        if session.query(users.User).filter(users.User.id == col_id).first() is None:
+            return jsonify({'error': 'Bad request (Incorrect collaborators` id)'})
     job.team_leader = request.json['team_leader']
     job.job = request.json['job']
     job.work_size = request.json['work_size']
